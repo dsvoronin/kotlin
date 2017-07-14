@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
-import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import org.junit.Test
 
@@ -66,6 +65,27 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
             val bar = file.findElementByText<UMethod>("fun bar() = \"Hello!\"")
             assertFalse(bar.containingFile.text!!, bar.psi.modifierList.hasExplicitModifier(PsiModifier.DEFAULT))
             assertTrue(bar.containingFile.text!!, bar.psi.modifierList.hasModifierProperty(PsiModifier.DEFAULT))
+        }
+    }
+
+    @Test fun testSAM() {
+        doTest("SAM") { _, file ->
+            assertNull(file.findElementByText<ULambdaExpression>("{ /* Not SAM */ }").functionalInterfaceType)
+
+            assertEquals("java.lang.Runnable",
+                         file.findElementByText<ULambdaExpression>("{/* Variable */}").functionalInterfaceType?.canonicalText)
+
+            assertEquals("java.lang.Runnable",
+                         file.findElementByText<ULambdaExpression>("{/* Assignment */}").functionalInterfaceType?.canonicalText)
+
+            assertEquals("java.lang.Runnable",
+                          file.findElementByText<ULambdaExpression>("{/* Type Cast */}").functionalInterfaceType?.canonicalText)
+
+            assertEquals("java.lang.Runnable",
+                         file.findElementByText<ULambdaExpression>("{/* Argument */}").functionalInterfaceType?.canonicalText)
+
+            assertEquals("java.lang.Runnable",
+                         file.findElementByText<ULambdaExpression>("{/* Return */}").functionalInterfaceType?.canonicalText)
         }
     }
 
