@@ -75,7 +75,9 @@ sealed class DoubleColonLHS(val type: KotlinType) {
      *     (Obj)::class       // not an object qualifier (can only be treated as an expression, not as a type)
      *     { Obj }()::class   // not an object qualifier
      */
-    class Expression(val typeInfo: KotlinTypeInfo, val isObjectQualifier: Boolean) : DoubleColonLHS(typeInfo.type!!) {
+    class Expression(val typeInfo: KotlinTypeInfo, val isObjectQualifier: Boolean)
+        : DoubleColonLHS(typeInfo.type ?: ErrorUtils.createErrorType("Type not resolved for double-colon expression")
+    ) {
         val dataFlowInfo: DataFlowInfo = typeInfo.dataFlowInfo
     }
 
@@ -336,7 +338,7 @@ class DoubleColonExpressionResolver(
             val lhs = resultForExpr.lhs
             // If expression result is an object, we remember this and skip it here, because there are valid situations where
             // another type (representing another classifier) should win
-            if (lhs != null && !lhs.isObjectQualifier) {
+            if (lhs != null && !lhs.isObjectQualifier && lhs.typeInfo.type?.isError == false) {
                 return resultForExpr.commit()
             }
         }
@@ -408,9 +410,6 @@ class DoubleColonExpressionResolver(
 
     private fun resolveExpressionOnLHS(expression: KtExpression, c: ExpressionTypingContext): DoubleColonLHS.Expression? {
         val typeInfo = expressionTypingServices.getTypeInfo(expression, c)
-
-        // TODO: do not lose data flow info maybe
-        if (typeInfo.type == null) return null
 
         // Be careful not to call a utility function to get a resolved call by an expression which may accidentally
         // deparenthesize that expression, as this is undesirable here
