@@ -20,6 +20,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.containers.StringInterner
 import org.jetbrains.kotlin.TestWithWorkingDir
+import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
@@ -251,8 +252,10 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
             build()
         }
         val environment = createTestingCompilerEnvironment(messageCollector, outputItemsCollector, services)
-        val exitCode = runCompiler(filesToCompile, environment)
-        processCompilationResults(outputItemsCollector, environment.services)
+        val exitCode = runCompiler(filesToCompile, environment) as? ExitCode
+        if (exitCode == ExitCode.OK) {
+            processCompilationResults(outputItemsCollector, environment.services)
+        }
 
         val lookups = lookupTracker.lookups.groupBy { File(it.filePath) }
         val lookupsFromCompiledFiles = filesToCompile.associate { it to (lookups[it] ?: emptyList()) }
