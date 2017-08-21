@@ -403,11 +403,9 @@ class CompileServiceImpl(
                     CompileService.TargetPlatform.JS -> {
                         val k2jsArgs = k2PlatformArgs as K2JSCompilerArguments
 
-                        withIC {
-                            withJsIC {
-                                doCompile(sessionId, daemonReporter, tracer = null) { _, _ ->
-                                    execJsIncrementalCompiler(k2jsArgs, gradleIncrementalArgs, gradleIncrementalServicesFacade, compilationResults!!, messageCollector)
-                                }
+                        withJsIC {
+                            doCompile(sessionId, daemonReporter, tracer = null) { _, _ ->
+                                execJsIncrementalCompiler(k2jsArgs, gradleIncrementalArgs, gradleIncrementalServicesFacade, compilationResults!!, messageCollector)
                             }
                         }
                     }
