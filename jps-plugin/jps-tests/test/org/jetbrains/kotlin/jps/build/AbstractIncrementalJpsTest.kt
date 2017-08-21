@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.concurrency.FixedFuture
 import junit.framework.TestCase
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.keysToMap
 import java.io.*
 import java.util.*
+import java.util.concurrent.Future
 import kotlin.reflect.jvm.javaField
 
 abstract class AbstractIncrementalJpsTest(
@@ -130,8 +132,10 @@ abstract class AbstractIncrementalJpsTest(
         super.tearDown()
     }
 
+    // JPS forces rebuild of all files when JVM constant has been changed and Callbacks.ConstantAffectionResolver
+    // is not provided, so ConstantAffectionResolver is mocked with empty implementation
     protected open val mockConstantSearch: Callbacks.ConstantAffectionResolver?
-        get() = null
+        get() = EmptyConstantSearch
 
     private fun build(scope: CompileScopeTestBuilder = CompileScopeTestBuilder.make().allModules()): MakeResult {
         val workDirPath = FileUtil.toSystemIndependentName(workDir.absolutePath)
@@ -474,6 +478,17 @@ abstract class AbstractIncrementalJpsTest(
             logBuf.append(KotlinTestUtils.replaceHashWithStar(message!!.replace("^$rootPath/".toRegex(), "  "))).append('\n')
         }
     }
+}
+
+private object EmptyConstantSearch : Callbacks.ConstantAffectionResolver {
+    override fun request(
+            ownerClassName: String,
+            fieldName: String,
+            accessFlags: Int,
+            fieldRemoved: Boolean,
+            accessChanged: Boolean
+    ): Future<Callbacks.ConstantAffection> =
+            FixedFuture(Callbacks.ConstantAffection(listOf()))
 }
 
 internal val ProjectDescriptor.allModuleTargets: Collection<ModuleBuildTarget>
