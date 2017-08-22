@@ -968,6 +968,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             doTest(fileName);
         }
 
+        @TestMetadata("kt19767_3.kt")
+        public void testKt19767_3() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/boxingOptimization/kt19767_3.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("kt19767_chain.kt")
         public void testKt19767_chain() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/boxingOptimization/kt19767_chain.kt");

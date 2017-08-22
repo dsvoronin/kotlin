@@ -2984,7 +2984,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         KotlinType type = expressionJetType(expression);
         if (type == null) return false;
 
-        return !type.isMarkedNullable() && !FlexibleTypesKt.isFlexible(type);
+        return !TypeUtils.isNullableType(type);
     }
 
     private StackValue genCmpPrimitiveToSafeCall(
