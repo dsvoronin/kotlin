@@ -85,6 +85,7 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterKind;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterSignature;
 import org.jetbrains.kotlin.resolve.scopes.receivers.*;
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor;
+import org.jetbrains.kotlin.types.FlexibleTypesKt;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.TypeProjection;
 import org.jetbrains.kotlin.types.TypeUtils;
@@ -2926,11 +2927,11 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
             return genCmpWithZero(left, opToken, pregeneratedLeft);
         }
 
-        if (pregeneratedLeft == null && left instanceof KtSafeQualifiedExpression && isPrimitive(rightType)) {
+        if (pregeneratedLeft == null && left instanceof KtSafeQualifiedExpression && isPureNonNullType(left) && isPrimitive(rightType)) {
             return genCmpSafeCallToPrimitive((KtSafeQualifiedExpression) left, right, rightType, opToken);
         }
 
-        if (isPrimitive(leftType) && right instanceof KtSafeQualifiedExpression) {
+        if (isPrimitive(leftType) && right instanceof KtSafeQualifiedExpression && isPureNonNullType(right)) {
             return genCmpPrimitiveToSafeCall(left, leftType, (KtSafeQualifiedExpression) right, opToken, pregeneratedLeft);
         }
 
@@ -2977,6 +2978,13 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         }
 
         return genEqualsForExpressionsPreferIEEE754Arithmetic(left, right, opToken, leftType, rightType, pregeneratedLeft);
+    }
+
+    private boolean isPureNonNullType(@NotNull KtExpression expression) {
+        KotlinType type = expressionJetType(expression);
+        if (type == null) return false;
+
+        return !type.isMarkedNullable() && !FlexibleTypesKt.isFlexible(type);
     }
 
     private StackValue genCmpPrimitiveToSafeCall(
